@@ -18,8 +18,8 @@ from email.utils import formatdate
 from errno import ENOPROTOOPT
 
 SSDP_PORT = 1900
-SSDP_ADDR = '239.255.255.250'
-SERVER_ID = 'ZeWaren example SSDP Server'
+SSDP_ADDR = "239.255.255.250"
+SERVER_ID = "ZeWaren example SSDP Server"
 
 
 logger = logging.getLogger()
@@ -29,6 +29,7 @@ class SSDPServer:
     """A class implementing a SSDP server.  The notify_received and
     searchReceived methods are called when the appropriate type of
     datagram is received by the server."""
+
     known = {}
 
     def __init__(self):
@@ -48,10 +49,10 @@ class SSDPServer:
                     raise
 
         addr = socket.inet_aton(SSDP_ADDR)
-        interface = socket.inet_aton('0.0.0.0')
+        interface = socket.inet_aton("0.0.0.0")
         cmd = socket.IP_ADD_MEMBERSHIP
         self.sock.setsockopt(socket.IPPROTO_IP, cmd, addr + interface)
-        self.sock.bind(('0.0.0.0', SSDP_PORT))
+        self.sock.bind(("0.0.0.0", SSDP_PORT))
         self.sock.settimeout(1)
 
         while True:
@@ -64,7 +65,7 @@ class SSDPServer:
 
     def shutdown(self):
         for st in self.known:
-            if self.known[st]['MANIFESTATION'] == 'local':
+            if self.known[st]["MANIFESTATION"] == "local":
                 self.do_byebye(st)
 
     def datagram_received(self, data, host_port):
@@ -73,51 +74,60 @@ class SSDPServer:
         (host, port) = host_port
 
         try:
-            header, payload = data.decode().split('\r\n\r\n')[:2]
+            header, payload = data.decode().split("\r\n\r\n")[:2]
         except ValueError as err:
             logger.error(err)
             return
 
-        lines = header.split('\r\n')
-        cmd = lines[0].split(' ')
-        lines = map(lambda x: x.replace(': ', ':', 1), lines[1:])
+        lines = header.split("\r\n")
+        cmd = lines[0].split(" ")
+        lines = map(lambda x: x.replace(": ", ":", 1), lines[1:])
         lines = filter(lambda x: len(x) > 0, lines)
 
-        headers = [x.split(':', 1) for x in lines]
+        headers = [x.split(":", 1) for x in lines]
         headers = dict(map(lambda x: (x[0].lower(), x[1]), headers))
 
-        logger.info('SSDP command %s %s - from %s:%d' % (cmd[0], cmd[1], host, port))
-        logger.debug('with headers: {}.'.format(headers))
-        if cmd[0] == 'M-SEARCH' and cmd[1] == '*':
+        logger.info("SSDP command %s %s - from %s:%d" % (cmd[0], cmd[1], host, port))
+        logger.debug("with headers: {}.".format(headers))
+        if cmd[0] == "M-SEARCH" and cmd[1] == "*":
             # SSDP discovery
             self.discovery_request(headers, (host, port))
-        elif cmd[0] == 'NOTIFY' and cmd[1] == '*':
+        elif cmd[0] == "NOTIFY" and cmd[1] == "*":
             # SSDP presence
-            logger.debug('NOTIFY *')
+            logger.debug("NOTIFY *")
         else:
-            logger.warning('Unknown SSDP command %s %s' % (cmd[0], cmd[1]))
+            logger.warning("Unknown SSDP command %s %s" % (cmd[0], cmd[1]))
 
-    def register(self, manifestation, usn, st, location, server=SERVER_ID, cache_control='max-age=1800', silent=False,
-                 host=None):
+    def register(
+        self,
+        manifestation,
+        usn,
+        st,
+        location,
+        server=SERVER_ID,
+        cache_control="max-age=1800",
+        silent=False,
+        host=None,
+    ):
         """Register a service or device that this SSDP server will
         respond to."""
 
-        logging.info('Registering %s (%s)' % (st, location))
+        logging.info("Registering %s (%s)" % (st, location))
 
         self.known[usn] = {}
-        self.known[usn]['USN'] = usn
-        self.known[usn]['LOCATION'] = location
-        self.known[usn]['ST'] = st
-        self.known[usn]['EXT'] = ''
-        self.known[usn]['SERVER'] = server
-        self.known[usn]['CACHE-CONTROL'] = cache_control
+        self.known[usn]["USN"] = usn
+        self.known[usn]["LOCATION"] = location
+        self.known[usn]["ST"] = st
+        self.known[usn]["EXT"] = ""
+        self.known[usn]["SERVER"] = server
+        self.known[usn]["CACHE-CONTROL"] = cache_control
 
-        self.known[usn]['MANIFESTATION'] = manifestation
-        self.known[usn]['SILENT'] = silent
-        self.known[usn]['HOST'] = host
-        self.known[usn]['last-seen'] = time.time()
+        self.known[usn]["MANIFESTATION"] = manifestation
+        self.known[usn]["SILENT"] = silent
+        self.known[usn]["HOST"] = host
+        self.known[usn]["last-seen"] = time.time()
 
-        if manifestation == 'local' and self.sock:
+        if manifestation == "local" and self.sock:
             self.do_notify(usn)
 
     def unregister(self, usn):
@@ -128,7 +138,10 @@ class SSDPServer:
         return usn in self.known
 
     def send_it(self, response, destination, delay, usn):
-        logger.debug('send discovery response delayed by %ds for %s to %r' % (delay, usn, destination))
+        logger.debug(
+            "send discovery response delayed by %ds for %s to %r"
+            % (delay, usn, destination)
+        )
         try:
             self.sock.sendto(response.encode(), destination)
         except (AttributeError, socket.error) as msg:
@@ -140,86 +153,91 @@ class SSDPServer:
 
         (host, port) = host_port
 
-        logger.info('Discovery request from (%s,%d) for %s' % (host, port, headers['st']))
-        logger.info('Discovery request for %s' % headers['st'])
+        logger.info(
+            "Discovery request from (%s,%d) for %s" % (host, port, headers["st"])
+        )
+        logger.info("Discovery request for %s" % headers["st"])
 
         # Do we know about this service?
         for i in self.known.values():
-            if i['MANIFESTATION'] == 'remote':
+            if i["MANIFESTATION"] == "remote":
                 continue
-            if headers['st'] == 'ssdp:all' and i['SILENT']:
+            if headers["st"] == "ssdp:all" and i["SILENT"]:
                 continue
-            if i['ST'] == headers['st'] or headers['st'] == 'ssdp:all':
-                response = ['HTTP/1.1 200 OK']
+            if i["ST"] == headers["st"] or headers["st"] == "ssdp:all":
+                response = ["HTTP/1.1 200 OK"]
 
                 usn = None
                 for k, v in i.items():
-                    if k == 'USN':
+                    if k == "USN":
                         usn = v
-                    if k not in ('MANIFESTATION', 'SILENT', 'HOST'):
-                        response.append('%s: %s' % (k, v))
+                    if k not in ("MANIFESTATION", "SILENT", "HOST"):
+                        response.append("%s: %s" % (k, v))
 
                 if usn:
-                    response.append('DATE: %s' % formatdate(timeval=None, localtime=False, usegmt=True))
+                    response.append(
+                        "DATE: %s"
+                        % formatdate(timeval=None, localtime=False, usegmt=True)
+                    )
 
-                    response.extend(('', ''))
-                    delay = random.randint(0, int(headers['mx']))
+                    response.extend(("", ""))
+                    delay = random.randint(0, int(headers["mx"]))
 
-                    self.send_it('\r\n'.join(response), (host, port), delay, usn)
+                    self.send_it("\r\n".join(response), (host, port), delay, usn)
 
     def do_notify(self, usn):
         """Do notification"""
 
-        if self.known[usn]['SILENT']:
+        if self.known[usn]["SILENT"]:
             return
-        logger.info('Sending alive notification for %s' % usn)
+        logger.info("Sending alive notification for %s" % usn)
 
         resp = [
-            'NOTIFY * HTTP/1.1',
-            'HOST: %s:%d' % (SSDP_ADDR, SSDP_PORT),
-            'NTS: ssdp:alive',
+            "NOTIFY * HTTP/1.1",
+            "HOST: %s:%d" % (SSDP_ADDR, SSDP_PORT),
+            "NTS: ssdp:alive",
         ]
         stcpy = dict(self.known[usn].items())
-        stcpy['NT'] = stcpy['ST']
-        del stcpy['ST']
-        del stcpy['MANIFESTATION']
-        del stcpy['SILENT']
-        del stcpy['HOST']
-        del stcpy['last-seen']
+        stcpy["NT"] = stcpy["ST"]
+        del stcpy["ST"]
+        del stcpy["MANIFESTATION"]
+        del stcpy["SILENT"]
+        del stcpy["HOST"]
+        del stcpy["last-seen"]
 
-        resp.extend(map(lambda x: ': '.join(x), stcpy.items()))
-        resp.extend(('', ''))
-        logger.debug('do_notify content: %s', resp)
+        resp.extend(map(lambda x: ": ".join(x), stcpy.items()))
+        resp.extend(("", ""))
+        logger.debug("do_notify content: %s", resp)
         try:
-            self.sock.sendto('\r\n'.join(resp).encode(), (SSDP_ADDR, SSDP_PORT))
-            self.sock.sendto('\r\n'.join(resp).encode(), (SSDP_ADDR, SSDP_PORT))
+            self.sock.sendto("\r\n".join(resp).encode(), (SSDP_ADDR, SSDP_PORT))
+            self.sock.sendto("\r\n".join(resp).encode(), (SSDP_ADDR, SSDP_PORT))
         except (AttributeError, socket.error) as msg:
             logger.warning("failure sending out alive notification: %r" % msg)
 
     def do_byebye(self, usn):
         """Do byebye"""
 
-        logger.info('Sending byebye notification for %s' % usn)
+        logger.info("Sending byebye notification for %s" % usn)
 
         resp = [
-            'NOTIFY * HTTP/1.1',
-            'HOST: %s:%d' % (SSDP_ADDR, SSDP_PORT),
-            'NTS: ssdp:byebye',
+            "NOTIFY * HTTP/1.1",
+            "HOST: %s:%d" % (SSDP_ADDR, SSDP_PORT),
+            "NTS: ssdp:byebye",
         ]
         try:
             stcpy = dict(self.known[usn].items())
-            stcpy['NT'] = stcpy['ST']
-            del stcpy['ST']
-            del stcpy['MANIFESTATION']
-            del stcpy['SILENT']
-            del stcpy['HOST']
-            del stcpy['last-seen']
-            resp.extend(map(lambda x: ': '.join(x), stcpy.items()))
-            resp.extend(('', ''))
-            logger.debug('do_byebye content: %s', resp)
+            stcpy["NT"] = stcpy["ST"]
+            del stcpy["ST"]
+            del stcpy["MANIFESTATION"]
+            del stcpy["SILENT"]
+            del stcpy["HOST"]
+            del stcpy["last-seen"]
+            resp.extend(map(lambda x: ": ".join(x), stcpy.items()))
+            resp.extend(("", ""))
+            logger.debug("do_byebye content: %s", resp)
             if self.sock:
                 try:
-                    self.sock.sendto('\r\n'.join(resp), (SSDP_ADDR, SSDP_PORT))
+                    self.sock.sendto("\r\n".join(resp), (SSDP_ADDR, SSDP_PORT))
                 except (AttributeError, socket.error) as msg:
                     logger.error("failure sending out byebye notification: %r" % msg)
         except KeyError as msg:
