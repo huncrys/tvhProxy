@@ -4,6 +4,9 @@
     "config:recommended",
     "customManagers:dockerfileVersions"
   ],
+  "lockFileMaintenance": {
+    "enabled": true
+  },
   "reviewers": [
     "crys"
   ]
