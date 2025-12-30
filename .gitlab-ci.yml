@@ -3,6 +3,6 @@ variables:
   CI_GHCR_IMAGE: huncrys/tvhproxy
 
 include:
-  - component: $CI_SERVER_FQDN/oaklab/ci-templates/oci-publish@10
+  - component: $CI_SERVER_FQDN/oaklab/ci-templates/oci-publish@11
     inputs:
       licenses: BSD-3-Clause
