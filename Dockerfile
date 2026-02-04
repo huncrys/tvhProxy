@@ -1,5 +1,5 @@
-FROM astral/uv:0.9@sha256:db9370c2b0b837c74f454bea914343da9f29232035aa7632a1b14dc03add9edb AS uv
-FROM python:3.14-alpine@sha256:31da4cb527055e4e3d7e9e006dffe9329f84ebea79eaca0a1f1c27ce61e40ca5 AS base
+FROM astral/uv:0.9@sha256:538e0b39736e7feae937a65983e49d2ab75e1559d35041f9878b7b7e51de91e4 AS uv
+FROM python:3.14-alpine@sha256:14558bb88225c495de95c0796c22de2c708500e48e9a6b84ce6b729d590fcb65 AS base
 
 FROM base AS builder
 
