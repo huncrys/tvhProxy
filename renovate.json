@@ -1,13 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    "customManagers:dockerfileVersions",
+    "oaklab/renovate-presets",
+    "oaklab/renovate-presets:docker",
     "group:all"
   ],
-  "lockFileMaintenance": {
-    "enabled": true
-  },
   "reviewers": [
     "crys"
   ]
