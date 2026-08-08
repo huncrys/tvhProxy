@@ -1,8 +1,18 @@
+spec:
+  inputs:
+    no-cache:
+      type: boolean
+      default: false
+      description: Whether to disable the build cache when building the image.
+---
 variables:
   CI_DOCKERHUB_IMAGE: huncrys/tvhproxy
   CI_GHCR_IMAGE: huncrys/tvhproxy
 
 include:
+  - component: $CI_SERVER_FQDN/oaklab/ci-templates/hadolint@12
   - component: $CI_SERVER_FQDN/oaklab/ci-templates/oci-publish@12
     inputs:
       licenses: BSD-3-Clause
+      registry-cache: true
+      no-cache: $[[ inputs.no-cache ]]
